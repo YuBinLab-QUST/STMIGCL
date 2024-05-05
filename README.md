@@ -172,15 +172,15 @@ if __name__ == "__main__":
 
 ```
 # Requirements
-python 3.9 
-numpy 
-scikit-learn 
-scanpy 
-torch 
-networkx 
+python 3.9 <br> 
+numpy <br>
+scikit-learn <br>
+scanpy <br>
+torch <br>
+networkx <br>
 # Dataset
-(1) the DLPFC dataset is accessible within the spatialLIBD package http://spatial.libd.org/spatialLIBD 
-(2) 10x Visium spatial transcriptomics dataset of human breast cancer https://github.com/JinmiaoChenLab/SEDR_analyses/tree/master/data 
-(3) the processed Stereo-seq data from mouse olfactory bulb tissue is accessible on https://github.com/JinmiaoChenLab/SEDR_analyses 
-(4) the Stereo-seq data acquired from mouse embryos at E9.5 can be downloaded from https://db.cngb.org/stomics/mosta/ 
-(5) the mouse visual cortex STARmap data is accessible on https://www.starmapresources.com/data
+(1) the DLPFC dataset is accessible within the spatialLIBD package http://spatial.libd.org/spatialLIBD <br>
+(2) 10x Visium spatial transcriptomics dataset of human breast cancer https://github.com/JinmiaoChenLab/SEDR_analyses/tree/master/data <br>
+(3) the processed Stereo-seq data from mouse olfactory bulb tissue is accessible on https://github.com/JinmiaoChenLab/SEDR_analyses <br>
+(4) the Stereo-seq data acquired from mouse embryos at E9.5 can be downloaded from https://db.cngb.org/stomics/mosta/ <br>
+(5) the mouse visual cortex STARmap data is accessible on https://www.starmapresources.com/data <br>
