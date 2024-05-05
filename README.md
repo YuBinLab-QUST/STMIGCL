@@ -25,10 +25,7 @@ from VGAE import GCNModelVAE
 from loss import VGAE_Loss, target_distribution, Implicit_Contrastive_Loss, kl_loss
 from utils import load_data, features_construct_graph, spatial_construct_graph, Reconstruct_Ratio, load_Stereo_data
 
-import matplotlib as mpl
 import matplotlib.pyplot as plt
-
-mpl.use('TkAgg')
 
 
 def train():
@@ -174,3 +171,16 @@ if __name__ == "__main__":
                   show=True)
 
 ```
+# Requirements
+python 3.9 
+numpy 
+scikit-learn 
+scanpy 
+torch 
+networkx 
+# Dataset
+(1) the DLPFC dataset is accessible within the spatialLIBD package http://spatial.libd.org/spatialLIBD 
+(2) 10x Visium spatial transcriptomics dataset of human breast cancer https://github.com/JinmiaoChenLab/SEDR_analyses/tree/master/data 
+(3) the processed Stereo-seq data from mouse olfactory bulb tissue is accessible on https://github.com/JinmiaoChenLab/SEDR_analyses 
+(4) the Stereo-seq data acquired from mouse embryos at E9.5 can be downloaded from https://db.cngb.org/stomics/mosta/ 
+(5) the mouse visual cortex STARmap data is accessible on https://www.starmapresources.com/data
