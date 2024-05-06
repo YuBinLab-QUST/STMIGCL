@@ -9,7 +9,7 @@ git clone git@github.com:YuBinLab-QUST/STMIGCL.git
 cd STMIGCL
 ```
 ## Usage
-example DLPFC.py
+example DLPFC dataset
 ```
 import scanpy as sc
 from STMIGCL.train import train
