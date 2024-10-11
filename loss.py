@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-import torch.nn.functional as F
+import torch.nn.functional as F 
 
 
 def target_distribution(q):
