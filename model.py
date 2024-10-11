@@ -5,6 +5,7 @@ from torch.nn.parameter import Parameter
 from layer import GraphConvolution
 
 
+
 class GCN(nn.Module):
     def __init__(self, nfeat, out):
         super(GCN, self).__init__()
