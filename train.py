@@ -12,6 +12,7 @@ from loss import VGAE_Loss, target_distribution, Implicit_Contrastive_Loss, kl_l
 from utils import features_construct_graph, spatial_construct_graph, Reconstruct_Ratio, load_Stereo_data
 
 
+
 def train(args, adata, features):
     adj1, adj1_ori, adj1_label, pos_weight1, norm1 = features_construct_graph(features, args.k)
     adj1 = adj1.to(args.device)
