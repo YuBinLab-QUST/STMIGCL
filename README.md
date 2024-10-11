@@ -32,7 +32,7 @@ sc.pl.spatial(adata,
               show=True)
 ```
 # Requirements
-python 3.9 <br> 
+python 3.9 <br>   
 numpy <br>
 scikit-learn <br>
 scanpy <br>
