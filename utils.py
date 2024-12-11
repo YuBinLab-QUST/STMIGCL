@@ -1,41 +1,42 @@
 import os
-import torch
-import sklearn
+import random
+
+import numpy as np
 import pandas as pd
 import scanpy as sc
-import numpy as np
 import scipy.sparse as sp
-from sklearn.decomposition import PCA
+import sklearn
+import torch
 from scipy.sparse import issparse
+from sklearn.decomposition import PCA
 from sklearn.neighbors import kneighbors_graph
-
 
 
 def load_data(args):
     if args.dataset == "DLPFC":
-        input_dir = os.path.join('Data\\', args.dataset, args.slice)
+        input_dir = os.path.join('./Data/', args.dataset, args.slice)
         adata = sc.read_visium(path=input_dir, count_file='filtered_feature_bc_matrix.h5', load_images=True)
-        label = pd.read_csv(os.path.join('Data\\', args.dataset, args.slice + '/metadata.tsv'), sep='\t')
+        label = pd.read_csv(os.path.join('./Data/', args.dataset, args.slice + '/metadata.tsv'), sep='\t')
         adata.obs['Ground Truth'] = label['layer_guess'].values
         adata.var_names_make_unique()
-    elif args.dataset == "Human_breast_cancer(10x)":
-        input_dir = os.path.join('D:\Data\\', args.dataset)
+    elif args.dataset == "Human_breast_cancer":
+        input_dir = os.path.join('./Data/', args.dataset)
         adata = sc.read_visium(path=input_dir, count_file='filtered_feature_bc_matrix.h5', load_images=True)
-        label = pd.read_csv(os.path.join('D:\Data\\', args.dataset + '/metadata.tsv'), sep='\t')
+        label = pd.read_csv(os.path.join('./Data/', args.dataset + '/metadata.tsv'), sep='\t')
         adata.obs['Ground Truth'] = label['fine_annot_type'].values
         adata.var_names_make_unique()
-    elif args.dataset == "Mouse_visual_cortex(STARmap)":
-        input_dir = os.path.join('D:\Data\\', args.dataset)
+    elif args.dataset == "STARmap":
+        input_dir = os.path.join('./Data/', args.dataset)
         adata = sc.read(input_dir + '/STARmap_20180505_BY3_1k.h5ad')
         adata.obs['Ground Truth'] = adata.obs['label']
-    else:
-        input_dir = os.path.join('D:\Data\\', args.dataset)
-        adata = sc.read(input_dir + '/E10.5_E1S1.MOSTA.h5ad')
-        adata.obs['Ground Truth'] = adata.obs['annotation']
+    elif args.dataset == "osmFISH":
+        input_dir = os.path.join('./Data/', args.dataset)
+        adata = sc.read_h5ad(input_dir + "/osmFISH_MSC.h5ad")
+        adata.obs['Ground Truth'] = adata.obs['Region']
 
+    # Expression data preprocessing
     prefilter_genes(adata, min_cells=3)
     adata = adata[~pd.isnull(adata.obs['Ground Truth'])]
-    labels = adata.obs['Ground Truth']
 
     sc.pp.highly_variable_genes(adata, flavor="seurat_v3", n_top_genes=3000)
     sc.pp.normalize_per_cell(adata)
@@ -49,17 +50,19 @@ def load_data(args):
         pca.fit(adata.X)
         embed = pca.transform(adata.X)
     features = torch.FloatTensor(np.array(embed))
+    adata.obsm['features'] = features
 
-    return adata, features, labels
+    return adata
 
 
 def load_Stereo_data(args):
-    input_dir = os.path.join('D:/Data/', args.dataset + '/Stero-seq' + '/filtered_feature_bc_matrix.h5ad')
+    input_dir = os.path.join('./Data/', args.dataset + '/Stero-seq' + '/filtered_feature_bc_matrix.h5ad')
     adata = sc.read_h5ad(input_dir)
     adata.var_names_make_unique()
 
     adata.var_names_make_unique()
     prefilter_genes(adata, min_cells=3)
+
     sc.pp.highly_variable_genes(adata, flavor="seurat_v3", n_top_genes=3000)
     sc.pp.normalize_per_cell(adata)
     sc.pp.log1p(adata)
@@ -72,8 +75,9 @@ def load_Stereo_data(args):
         pca.fit(adata.X)
         embed = pca.transform(adata.X)
     features = torch.FloatTensor(np.array(embed))
+    adata.obsm['features'] = features
 
-    return adata, features
+    return adata
 
 
 def prefilter_genes(adata, min_counts=None, max_counts=None, min_cells=10, max_cells=None):
@@ -110,7 +114,7 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     return torch.sparse.FloatTensor(indices, values, shape)
 
 
-def features_construct_graph(features, k=15, mode="connectivity", metric="cosine"):
+def features_construct_graph(features, k=20, mode="connectivity", metric="cosine"):
     features = features.cpu().numpy()
     adj_ori = kneighbors_graph(features, k, mode=mode, metric=metric, include_self=True)
     adj_ori = adj_ori.toarray()
@@ -131,7 +135,7 @@ def features_construct_graph(features, k=15, mode="connectivity", metric="cosine
     return adj, adj_ori, adj_label, pos_weight, norm
 
 
-def spatial_construct_graph(adata, radius=150):
+def spatial_construct_graph(adata, radius=700):
     coor = pd.DataFrame(adata.obsm['spatial'])
     coor.index = adata.obs.index
     coor.columns = ['imagerow', 'imagecol']
@@ -155,6 +159,15 @@ def spatial_construct_graph(adata, radius=150):
     norm = adj_ori.shape[0] ** 2 / (2 * (adj_ori.shape[0] ** 2 - adj_ori.sum()))
 
     return adj, adj_ori, adj_label, pos_weight, norm
+
+
+def setup_seed(args):
+
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    if args.cuda:
+        torch.cuda.manual_seed_all(args.seed)
+        torch.cuda.manual_seed(args.seed)
 
 
 def sigmoid(x):
