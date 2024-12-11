@@ -9,30 +9,12 @@ git clone git@github.com:YuBinLab-QUST/STMIGCL.git
 cd STMIGCL
 ```
 ## Usage
-example DLPFC dataset
+DLPFC dataset #151507
 ```
-import scanpy as sc
-from STMIGCL.train import train
-from args import init_args
-from utils import load_data
-
-import matplotlib.pyplot as plt
-
-args = init_args()
-adata, features, _ = load_data(args)
-
-y_pred = train(args, adata, features)
-adata.obs['pred'] = y_pred
-adata.obs["pred"] = adata.obs["pred"].astype('category')
-
-sc.pl.spatial(adata,
-              img_key="hires",
-              color=["pred"],
-              title=["STMIGCL"],
-              show=True)
+DLPFC.ipynb
 ```
 # Requirements
-python 3.9 <br>   
+python 3.9 <br>
 numpy <br>
 scikit-learn <br>
 scanpy <br>
