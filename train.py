@@ -3,17 +3,17 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from sklearn.cluster import KMeans
-from sklearn.metrics import adjusted_rand_score as ari_score
-from sklearn.metrics import normalized_mutual_info_score as nmi_score
+from tqdm import tqdm
 
-from model import STMGCN
 from VGAE import GCNModelVAE
 from loss import VGAE_Loss, target_distribution, Implicit_Contrastive_Loss, kl_loss
-from utils import features_construct_graph, spatial_construct_graph, Reconstruct_Ratio, load_Stereo_data
+from model import STMGCN
+from utils import features_construct_graph, spatial_construct_graph, Reconstruct_Ratio
 
 
+def train(args, adata):
+    features = adata.obsm['features']
 
-def train(args, adata, features):
     adj1, adj1_ori, adj1_label, pos_weight1, norm1 = features_construct_graph(features, args.k)
     adj1 = adj1.to(args.device)
     adj1_label = adj1_label.to(args.device)
@@ -22,13 +22,15 @@ def train(args, adata, features):
     adj2 = adj2.to(args.device)
     adj2_label = adj2_label.to(args.device)
 
-    VGAE1 = GCNModelVAE(features.shape[1], args.nemb)
-    VGAE2 = GCNModelVAE(features.shape[1], args.nemb)
+    VGAE1 = GCNModelVAE(features.shape[1], args.nemb, 0)
+    VGAE2 = GCNModelVAE(features.shape[1], args.nemb, 0)
     model = STMGCN(nfeat=features.shape[1], nemb=args.nemb, nclass=args.n_cluster)
 
     optimizer_vgae1 = torch.optim.Adam(VGAE1.parameters(), lr=args.lr2, weight_decay=0)
     optimizer_vgae2 = torch.optim.Adam(VGAE2.parameters(), lr=args.lr2, weight_decay=0)
     optimizer_model = torch.optim.Adam(model.parameters(), lr=args.lr1, weight_decay=args.weight_decay)
+
+    emb1, emb2, emb = model.mgcn(features, adj1, adj2)
 
     if args.cuda:
         features = features.cuda()
@@ -38,20 +40,11 @@ def train(args, adata, features):
         VGAE1.cuda()
         VGAE2.cuda()
 
-    model.train()
-    VGAE1.train()
-    VGAE2.train()
-
-    best_adj_acc = 0
-    adj_acc = 0.1
-    labels = adata.obs['Ground Truth']
-
-    emb1, emb2, emb = model.mgcn(features, adj1, adj2)
-
     if args.initcluster == "kmeans":
         print("Initializing cluster centers with kmeans, n_clusters known")
         kmeans = KMeans(args.n_cluster, n_init=20, algorithm='elkan')
         y_pred = kmeans.fit_predict(emb.detach().cpu().numpy())
+
     elif args.initcluster == "louvain":
         print("Initializing cluster centers with louvain,resolution=", args.res)
         adata = sc.AnnData(emb.detach().cpu().numpy())
@@ -69,7 +62,13 @@ def train(args, adata, features):
     with torch.no_grad():
         model.cluster_layer.copy_(torch.tensor(cluster_centers))
 
-    for epoch in range(args.max_epochs):
+    best_adj_acc = 0
+    adj_acc = 0.1
+
+    model.train()
+    VGAE1.train()
+    VGAE2.train()
+    for epoch in tqdm(range(args.max_epochs)):
         pred1, mu1, log_sigma1 = VGAE1(features, adj1)
         pred2, mu2, log_sigma2 = VGAE2(features, adj2)
 
@@ -118,11 +117,10 @@ def train(args, adata, features):
             y_pred = torch.argmax(tem_q, dim=1).cpu().numpy()
             delta_label = np.sum(y_pred != y_pred_last).astype(np.float32) / y_pred.shape[0]
             y_pred_last = y_pred
-            y = labels
+            # y = labels
 
-            nmi = nmi_score(y, y_pred)
-            ari = ari_score(y, y_pred)
-            print('Iter {}'.format(epoch), ', nmi {:.2f}'.format(nmi), ', ari {:.2f}'.format(ari))
+            # nmi = nmi_score(y, y_pred)
+            # ari = ari_score(y, y_pred)
 
             if epoch > 0 and delta_label < args.tol:
                 print('delta_label ', delta_label, '< tol ', args.tol)
@@ -137,4 +135,10 @@ def train(args, adata, features):
         optimizer_model.step()
 
         emb1, emb2, _ = model.mgcn(features, adj1, adj2)
-    return y_pred
+
+    model.eval()
+    _, _, x, _ = model(features, adj1, adj2)
+    adata.obsm['STMIGCL'] = x.detach().numpy()
+    adata.obs['pred'] = y_pred
+    adata.obs["pred"] = adata.obs["pred"].astype('category')
+    return adata
