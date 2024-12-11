@@ -1,7 +1,5 @@
-import os
 import torch
 import argparse
-import numpy as np
 
 
 def init_args():
@@ -17,7 +15,7 @@ def init_args():
 
     parser.add_argument('--initcluster', default="kmeans", type=str)
     parser.add_argument('--n_cluster', default=7, type=int)
-    parser.add_argument('--max_epochs', default=2000, type=int)
+    parser.add_argument('--max_epochs', default=1000, type=int)
     parser.add_argument('--update_interval', default=3, type=int)
     parser.add_argument('--tol', default=0.0001, type=float)
 
@@ -29,18 +27,11 @@ def init_args():
     parser.add_argument('--k', default=20, type=int)
     parser.add_argument('--radius', default=700, type=int)
 
-    args = parser.parse_args(args=[])
+    args = parser.parse_args()
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     args.cuda = torch.cuda.is_available()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     args.device = torch.device('cuda' if args.cuda else 'cpu')
 
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    if args.cuda:
-        torch.cuda.manual_seed_all(args.seed)
-        torch.cuda.manual_seed(args.seed)
-
-    return args     
+    return args
