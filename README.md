@@ -26,3 +26,4 @@ networkx <br>
 (3) the processed Stereo-seq data from mouse olfactory bulb tissue is accessible on https://github.com/JinmiaoChenLab/SEDR_analyses <br>
 (4) the Stereo-seq data acquired from mouse embryos at E9.5 can be downloaded from https://db.cngb.org/stomics/mosta/ <br>
 (5) the mouse visual cortex STARmap data is accessible on https://www.starmapresources.com/data <br>
+(6) the osmFISH mouse somatosensory cortex data is accessible on http://linnarssonlab.org/osmFISH/availability/ <br>
